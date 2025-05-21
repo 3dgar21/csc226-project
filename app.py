@@ -1,71 +1,145 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-import os, random
+# app.py
+from flask import Flask, render_template, request, redirect, session, url_for
+import random
+import sqlite3
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = "super_secret_key"
 
-# Spotify embed track links by genre
 sample_songs = {
     "Pop": [
-        "https://open.spotify.com/embed/track/0VjIjW4GlUZAMYd2vXMi3b",
-        "https://open.spotify.com/embed/track/4h9wh7iOZ0GGn8QVp4RAOB",
-        "https://open.spotify.com/embed/track/4aWmUDTfIPGksMNLV2rQP2"
+        ("Lady Gaga & Bruno Mars", "Die With A Smile", "2plbrEY59IikOBgBGLjaoe"),
+        ("Billie Eilish", "BIRDS OF A FEATHER", "6dOtVTDdiauQNBQEDOtlAB"),
+        ("Jimin", "Back to Friends", "0FTmksd2dxiE5e3rWyJXs6")
     ],
     "Rock": [
-        "https://open.spotify.com/embed/track/7tFiyTwD0nx5a1eklYtX2J",
-        "https://open.spotify.com/embed/track/5ghIJDpPoe3CfHMGu71E6T",
-        "https://open.spotify.com/embed/track/40riOy7x9W7GXjyGp4pjAv"
+        ("Queen", "Bohemian Rhapsody", "7tFiyTwD0nx5a1eklYtX2J"),
+        ("Led Zeppelin", "Stairway to Heaven", "5CQ30WqJwcep0pYcV4AMNc"),
+        ("Nirvana", "Smells Like Teen Spirit", "5ghIJDpPoe3CfHMGu71E6T")
     ],
     "Hip-Hop": [
-        "https://open.spotify.com/embed/track/2xLMifQCjDGFmkHkpNLD9h",
-        "https://open.spotify.com/embed/track/3qT4bUD1MaWpGrTwcvguhb",
-        "https://open.spotify.com/embed/track/2dLLR6qlu5UJ5gk0dKz0h3"
+        ("Bone Thugs-N-Harmony", "Foe tha Love of $", "1muLq1kBLWIT3pmNC2xl0g"),
+        ("Kendrick Lamar", "Not Like Us", "6AI3ezQ4o3HUoP6Dhudph3"),
+        ("Biggie", "Big Poppa", "63BcfK6YAzJYeISaTPr6IO")
     ],
     "R&B": [
-        "https://open.spotify.com/embed/track/2BtE7qm1qzM80p9vLSiXkj",
-        "https://open.spotify.com/embed/track/4RCwb5c5zQfQVsGiFOy1cM",
-        "https://open.spotify.com/embed/track/4w8niZpiMy6qz1mntFA5uM"
+        ("PARTYNEXTDOOR", "Recognize", "1DMYEiuAgz1OKvANXiNFrN"),
+        ("SZA", "Kill Bill", "3OHfY25tqY28d16oZczHc8"),
+        ("The Weeknd", "Somebody Loves Me", "2kZoOj1n5vk9BuF0sih58M")
     ],
     "Latin music": [
-        "https://open.spotify.com/embed/track/1WkMMavIMc4x3bpaIw74v2",
-        "https://open.spotify.com/embed/track/1z3HgkzqdeMPv9zM7EZGdh",
-        "https://open.spotify.com/embed/track/7MAibcTli4IisCtbHKrGMh"
+        ("Los Dareyes de la Sierra", "Vita Fer", "5HZBdV5AwSvKdHFOYbXYD7"),
+        ("Tito Double P", "Andamos Mejor", "3K56RPWS4q200IwHiIZcUD"),
+        ("Peso Pluma", "Lady Gaga", "7mXuWTczZNxG5EDcjFEuJR")
+    ],
+    "Afro-Beat": [
+        ("Burna Boy", "Last Last", "4WSbS21oUkwqdfjMhvnvkT"),
+        ("Wizkid", "Essence", "5Aqf0OgNCH3QZtvznc0y6g"),
+        ("Rema", "Calm Down", "4vUmTMuQqjdnvlZmAH61Qk")
     ]
 }
 
+def init_db():
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            genre TEXT,
+            artist TEXT,
+            title TEXT,
+            spotify_id TEXT,
+            timestamp TEXT,
+            user TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
 @app.route("/", methods=["GET", "POST"])
 def home():
+    selected = []
     if request.method == "POST":
-        genres = request.form.getlist("genres")
-        if not genres:
-            return render_template("index.html", error="Please select at least one genre.")
+        selected = request.form.getlist("genres")
+        if not selected:
+            return render_template("index.html", error="Please select at least one genre.", selected=selected)
 
-        all_recs = []
-        for genre in genres:
+        recs_by_genre = {}
+        for genre in selected:
             if genre in sample_songs:
                 songs = random.sample(sample_songs[genre], min(3, len(sample_songs[genre])))
-                all_recs.extend(songs)
+                recs_by_genre[genre] = []
+                for artist, title, spotify_id in songs:
+                    save_history(genre, artist, title, spotify_id)
+                    recs_by_genre[genre].append((artist, title, spotify_id))
 
-        return render_template("result.html", recs=all_recs, genres=genres)
+        return render_template("result.html", recs_by_genre=recs_by_genre)
 
-    return render_template("index.html")
+    return render_template("index.html", selected=selected)
+
+def save_history(genre, artist, title, spotify_id):
+    user = session.get("username")
+    if user:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cursor.execute('''
+            INSERT INTO history (genre, artist, title, spotify_id, timestamp, user)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (genre, artist, title, spotify_id, timestamp, user))
+        conn.commit()
+        conn.close()
+    else:
+        guest_history = session.get("guest_history", [])
+        guest_history.append({
+            "genre": genre,
+            "artist": artist,
+            "title": title,
+            "spotify_id": spotify_id,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        session["guest_history"] = guest_history
 
 @app.route("/history")
 def history():
-    return render_template("history.html")
+    user = session.get("username")
+    if user:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT genre, artist, title, spotify_id, timestamp FROM history WHERE user = ? ORDER BY id DESC", (user,))
+        history_data = cursor.fetchall()
+        conn.close()
+    else:
+        guest_history = session.get("guest_history", [])
+        history_data = [
+            (entry["genre"], entry["artist"], entry["title"], entry["spotify_id"], entry["timestamp"])
+            for entry in guest_history
+        ]
 
-@app.route("/login")
+    return render_template("history.html", history=history_data)
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        session["username"] = request.form.get("username", "Guest")
+        return redirect(url_for("home"))
     return render_template("login.html")
 
-@app.route("/signup")
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
+    if request.method == "POST":
+        session["username"] = request.form.get("username", "Guest")
+        return redirect(url_for("home"))
     return render_template("signup.html")
 
 @app.route("/logout")
 def logout():
-    session.clear()
-    return redirect(url_for("home"))
+    session.pop("username", None)
+    session.pop("guest_history", None)
+    return redirect(request.args.get("next", url_for("home")))
 
 if __name__ == "__main__":
     app.run(debug=True)

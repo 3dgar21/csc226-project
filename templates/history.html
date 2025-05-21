@@ -1,91 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Recommendation History</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      background-color: #f8f8f8;
-      color: #222;
-    }
+    <meta charset="UTF-8">
+    <title>Recommendation History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background-color: #121212;
+            color: #fff;
+        }
 
-    h2 {
-      margin-bottom: 20px;
-      text-align: center;
-      font-size: 28px;
-    }
+        h2 {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 30px;
+            color: #1DB954;
+        }
 
-    .entry {
-      margin-bottom: 20px;
-      padding: 12px;
-      border-bottom: 1px solid #ccc;
-      background-color: #fff;
-      border-radius: 8px;
-    }
+        .entry {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
 
-    .entry p {
-      margin: 6px 0;
-      font-size: 18px;
-    }
+        .entry p {
+            font-size: 16px;
+            margin: 5px 0;
+        }
 
-    a {
-      color: #28a745;
-      text-decoration: none;
-    }
+        iframe {
+            margin-top: 10px;
+            border-radius: 12px;
+        }
 
-    a:hover {
-      text-decoration: underline;
-    }
+        .back-link {
+            text-align: center;
+            margin-top: 50px;
+        }
 
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 40px;
-      font-size: 18px;
-    }
+        .back-link a {
+            display: inline-block;
+            background-color: #1DB954;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+        }
 
-    .timestamp {
-      font-size: 14px;
-      color: #666;
-    }
+        .back-link a:hover {
+            background-color: #17a74a;
+        }
 
-    .guest-note {
-      text-align: center;
-      font-size: 16px;
-      margin-bottom: 30px;
-      color: #999;
-    }
-  </style>
+        .guest-note {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 30px;
+            color: #bbb;
+        }
+    </style>
 </head>
 <body>
-  <h2>📜 Your Recommendation History</h2>
+    <h2>📜 Your Recommendation History</h2>
 
-  {% if history and history[0][0] == "Guest" %}
-    <div class="guest-note">This history is temporary and will reset when you leave the site.</div>
-  {% endif %}
+    {% if not session.username %}
+        <div class="guest-note">
+            This history is temporary and will be lost when you leave or refresh the site.
+        </div>
+    {% endif %}
 
-  {% if history %}
-    {% for genres, artist, song, url, timestamp in history %}
-      <div class="entry">
-        <p><strong>{{ song }}</strong> by {{ artist }}</p>
-        {% if genres != "Guest" %}
-          <p>🎧 Genres: {{ genres }}</p>
-          <p class="timestamp">🕒 {{ timestamp }}</p>
-        {% else %}
-          <p class="timestamp">🧑 Guest session</p>
-        {% endif %}
-        <a href="{{ url }}" target="_blank">▶️ Listen on Spotify</a>
-      </div>
-    {% endfor %}
-  {% else %}
-    <p>No history available.</p>
-  {% endif %}
+    {% if history %}
+        {% for entry in history %}
+            <div class="entry">
+                <p><strong>{{ entry[2] }}</strong> by {{ entry[1] }}</p>
+                <p>🎧 Genre: {{ entry[0] }}</p>
+                <p>⏰ {{ entry[4] }}</p>
+                {% if session.username %}
+                    <p>👤 {{ session.username }}</p>
+                {% endif %}
+                <iframe src="https://open.spotify.com/embed/track/{{ entry[3] }}"
+                        width="100%" height="80" frameborder="0"
+                        allowtransparency="true" allow="encrypted-media">
+                </iframe>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align:center;">No history available.</p>
+    {% endif %}
 
-  <div class="back-link">
-    <a href="/">🔙 Back to Home</a>
-  </div>
+    <div class="back-link">
+        <a href="/">🔙 Back to Home</a>
+    </div>
 </body>
 </html>
 

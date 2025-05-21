@@ -2,56 +2,178 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Find New Music</title>
+  <title>Spotirec – Find New Music</title>
   <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+      background-color: #121212;
+      color: white;
+      padding: 40px 20px;
+      margin: 0;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 36px;
+    }
+
+    /* Spotirec logo */
+    .brand-header {
+      position: absolute;
+      top: 20px;
+      left: 30px;
+      text-align: left;
+    }
+
+    .brand-header h1 {
+      color: #1DB954;
+      font-size: 32px;
+      margin: 0;
+      text-shadow: 0 0 6px #1DB954;
+    }
+
+    .brand-header p {
+      color: #aaa;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .top-left {
+      margin-top: 90px;
+      text-align: center;
+    }
+
+    .genre-btn {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      border: 2px solid #fff;
+      border-radius: 30px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .genre-btn.active, .genre-btn:hover {
+      background-color: #1DB954;
+      border-color: #1DB954;
+      color: #000;
+    }
+
+    .btn {
+      background-color: #1DB954;
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .btn:hover {
+      background-color: #17a74a;
+    }
+
+    .auth-links a {
+      color: #bbb;
+      margin: 0 10px;
+      font-size: 14px;
+    }
+
+    .history-link a {
+      color: #1DB954;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .bottom-right {
+      position: absolute;
+      bottom: 15px;
+      right: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .logout-bottom {
+      position: absolute;
+      bottom: 45px;
+      right: 20px;
+    }
+
+    .logout-bottom form button {
+      font-size: 12px;
+      background: none;
+      border: none;
+      color: #1DB954;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .logout-bottom form button:hover {
+      opacity: 0.8;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Spotirec logo and tagline in top-left -->
+  <div class="brand-header">
+    <h1>🎧 Spotirec</h1>
+    <p>Your personalized music vibes</p>
+  </div>
+
+  <!-- Centered Welcome & Content -->
   {% if session.username %}
     <div class="top-left">
       👋 Welcome, <strong>{{ session.username }}</strong>
     </div>
   {% endif %}
 
-  <h1>Find New Music</h1>
+  <h1 style="text-align:center;">Find New Music</h1>
 
   {% if error %}
-    <p style="color: red;">{{ error }}</p>
+    <p style="color: red; text-align:center;">{{ error }}</p>
   {% endif %}
 
-  <div class="history-link">
+  <div class="history-link" style="text-align:center;">
     <a href="/history">📜 View My History</a>
   </div>
 
-  <form method="POST" action="/" id="genre-form">
+  <form method="POST" action="/" id="genre-form" style="text-align:center; margin-top: 20px;">
     <div id="genre-buttons">
-      <label class="genre-btn {% if 'Pop' in selected %}active{% endif %}">
-        <input type="checkbox" name="genres" value="Pop" {% if 'Pop' in selected %}checked{% endif %}> Pop
-      </label>
-      <label class="genre-btn {% if 'Rock' in selected %}active{% endif %}">
-        <input type="checkbox" name="genres" value="Rock" {% if 'Rock' in selected %}checked{% endif %}> Rock
-      </label>
-      <label class="genre-btn {% if 'Hip-Hop' in selected %}active{% endif %}">
-        <input type="checkbox" name="genres" value="Hip-Hop" {% if 'Hip-Hop' in selected %}checked{% endif %}> Hip-Hop
-      </label>
-      <label class="genre-btn {% if 'R&B' in selected %}active{% endif %}">
-        <input type="checkbox" name="genres" value="R&B" {% if 'R&B' in selected %}checked{% endif %}> R&B
-      </label>
-      <label class="genre-btn {% if 'Latin music' in selected %}active{% endif %}">
-        <input type="checkbox" name="genres" value="Latin music" {% if 'Latin music' in selected %}checked{% endif %}> Latin music
-      </label>
+      {% for genre in ['Pop', 'Rock', 'Hip-Hop', 'R&B', 'Latin music', 'Afro-Beat'] %}
+        <label class="genre-btn {% if genre in selected %}active{% endif %}">
+          <input type="checkbox" name="genres" value="{{ genre }}" {% if genre in selected %}checked{% endif %} hidden> {{ genre }}
+        </label>
+      {% endfor %}
     </div>
 
-    <button type="submit">💡 Get Recommendations</button>
+    <button type="submit" class="btn">💡 Get Recommendations</button>
   </form>
 
-  <div class="auth-links" style="margin-top: 20px;">
-    <a href="/login">Login</a>
-    <a href="/signup">Sign Up</a>
-    <a href="/">Continue as Guest</a>
+  <div class="auth-links" style="margin-top: 20px; text-align:center;">
+    {% if not session.username %}
+      <a href="/login">Login</a>
+      <a href="/signup">Sign Up</a>
+    {% endif %}
+    <a href="/logout?next=/">Continue as Guest</a>
   </div>
 
+  <!-- Small Logout in Bottom Right -->
+  {% if session.username %}
+    <div class="logout-bottom">
+      <form action="/logout" method="get">
+        <button type="submit">Logout</button>
+      </form>
+    </div>
+  {% endif %}
+
   <footer class="bottom-right">
-    <span style="color: var(--text-muted);">🎵 Created by <strong>Edgar Del Angel</strong></span>
+    <span>🎵 Created by <strong>Edgar Del Angel</strong></span>
   </footer>
 
   <script>
