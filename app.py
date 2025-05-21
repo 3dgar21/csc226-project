@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, redirect, session, url_for
 import random
 import sqlite3
@@ -36,7 +35,14 @@ sample_songs = {
     "Afro-Beat": [
         ("Burna Boy", "Last Last", "4WSbS21oUkwqdfjMhvnvkT"),
         ("Wizkid", "Essence", "5Aqf0OgNCH3QZtvznc0y6g"),
-        ("Rema", "Calm Down", "4vUmTMuQqjdnvlZmAH61Qk")
+        ("Rema", "Calm Down", "4vUmTMuQqjdnvlZmAH61Qk"),
+        ("Asake", "Peace Be Unto You (PBUY)", "06QUZaXSOtwRNH1ZB20JgX"),
+        ("Burna Boy", "Sittin' On Top Of The World", "5aIVCx5tnk0ntmdiinnYvw"),
+        ("Fireboy DML", "Peru", "3baPniPXS0iEII8rDUJdYP"),
+        ("Ruger", "Asiwaju", "5Dz7hEiizJdHkUEPfnoBji"),
+        ("Omah Lay", "soso", "5YbPxJwPfrj7uswNwoF1pJ"),
+        ("Joeboy", "Sip (Alcohol)", "25Kyv5SeEenT0EETpP2hYn"),
+        ("CKay", "Love Nwantiti", "4vb777iaycnlFxVkJMmtfd")
     ]
 }
 
